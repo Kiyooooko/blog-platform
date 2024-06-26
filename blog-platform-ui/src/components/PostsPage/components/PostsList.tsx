@@ -1,25 +1,35 @@
-import React from 'react';
+import React, {Dispatch, SetStateAction} from 'react';
 
 import { Post } from '../../../types/Post';
 import PostItem from './PostItem';
 
 interface Props {
 	posts: Post[];
-	onPostClick: (post: Post) => void;
-	onDeletePost: (id: string) => void;
+	setPosts: Dispatch<SetStateAction<Post[]>>;
+	setSelectedPost: Dispatch<SetStateAction<Post | null>>;
 }
 
-const PostList = ({ posts, onPostClick, onDeletePost }: Props) => {
+const PostList = ({ posts, setPosts, setSelectedPost }: Props) => {
+
+	const handleDeletePost = async (id: string) => {
+		try {
+			await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+			setPosts((prevPosts) => prevPosts.filter((post) => post._id !== id));
+		} catch (error) {
+			console.error('Error deleting post:', error);
+		}
+	};
+
 	return (
 		<div className='posts-grid'>
 			{posts.map((post) => (
 				<PostItem
 					key={post._id}
 					post={post}
-					onClick={() => onPostClick(post)}
+					onClick={() => setSelectedPost(post)}
 					onDelete={(event) => {
 						event.stopPropagation();
-						onDeletePost(post._id);
+						handleDeletePost(post._id);
 					}}
 				/>
 			))}

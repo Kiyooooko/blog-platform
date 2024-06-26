@@ -22,65 +22,15 @@ const PostsPage = () => {
 		fetchPosts();
 	}, []);
 
-	const handleAddPost = async (title: string, content: string) => {
-		try {
-			const response = await fetch('/api/posts/create', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ title, content }),
-			});
-			const newPost = await response.json();
-			setPosts([newPost, ...posts]);
-		} catch (error) {
-			console.error('Error adding post:', error);
-		}
-	};
-
-	const handleUpdatePost = async (id: string, title: string, content: string) => {
-		try {
-			const response = await fetch(`/api/posts/${id}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ title, content }),
-			});
-			const updatedPost = await response.json();
-			const updatedPostsList = posts.map((post) =>
-				post._id === id ? updatedPost : post
-			);
-			setPosts(updatedPostsList);
-			setSelectedPost(null);
-		} catch (error) {
-			console.error('Error updating post:', error);
-		}
-	};
-
-	const handleDeletePost = async (id: string) => {
-		try {
-			await fetch(`/api/posts/${id}`, { method: 'DELETE' });
-			const updatedPosts = posts.filter((post) => post._id !== id);
-			setPosts(updatedPosts);
-		} catch (error) {
-			console.error('Error deleting post:', error);
-		}
-	};
-
-	const handlePostClick = (post: Post) => {
-		setSelectedPost(post);
-	};
-
-	const handleCancel = () => {
-		setSelectedPost(null);
-	};
 
 	return (
 		<div className='app-container'>
 			<PostForm
 				selectedPost={selectedPost}
-				onAddPost={handleAddPost}
-				onUpdatePost={handleUpdatePost}
-				onCancel={handleCancel}
+				setPosts={setPosts}
+				setSelectedPost={setSelectedPost}
 			/>
-			<PostList posts={posts} onPostClick={handlePostClick} onDeletePost={handleDeletePost} />
+			<PostList posts={posts} setPosts={setPosts} setSelectedPost={setSelectedPost} />
 		</div>
 	);
 };

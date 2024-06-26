@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, Dispatch, SetStateAction} from 'react';
 
 import { Post } from '../../../types/Post';
 
 interface Props {
 	selectedPost: Post | null;
-	onAddPost: (title: string, content: string) => void;
-	onUpdatePost: (id: string, title: string, content: string) => void;
-	onCancel: () => void;
+	setPosts: Dispatch<SetStateAction<Post[]>>;
+	setSelectedPost: Dispatch<SetStateAction<Post | null>>;
 }
 
-const PostForm = ({ selectedPost, onAddPost, onUpdatePost, onCancel }: Props) => {
+const PostForm = ({ selectedPost, setPosts, setSelectedPost }: Props) => {
 	const [title, setTitle] = useState('');
 	const [content, setContent] = useState('');
 
@@ -23,12 +22,47 @@ const PostForm = ({ selectedPost, onAddPost, onUpdatePost, onCancel }: Props) =>
 		}
 	}, [selectedPost]);
 
+	const handleAddPost = async (title: string, content: string) => {
+		try {
+			const response = await fetch('/api/posts/create', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ title, content }),
+			});
+			const newPost = await response.json();
+			setTitle('');
+			setContent('');
+			setPosts((prevPosts) => [newPost, ...prevPosts]);
+		} catch (error) {
+			console.error('Error adding post:', error);
+		}
+	};
+
+	const handleUpdatePost = async (id: string, title: string, content: string) => {
+		try {
+			const response = await fetch(`/api/posts/${id}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ title, content }),
+			});
+			const updatedPost = await response.json();
+			setPosts((prevPosts) => {
+				return prevPosts.map((post) =>
+					post._id === id ? updatedPost : post
+				)
+			});
+			setSelectedPost(null);
+		} catch (error) {
+			console.error('Error updating post:', error);
+		}
+	};
+
 	const handleSubmit = (event: React.FormEvent) => {
 		event.preventDefault();
 		if (selectedPost) {
-			onUpdatePost(selectedPost._id, title, content);
+			handleUpdatePost(selectedPost._id, title, content);
 		} else {
-			onAddPost(title, content);
+			handleAddPost(title, content);
 		}
 	};
 
@@ -50,7 +84,7 @@ const PostForm = ({ selectedPost, onAddPost, onUpdatePost, onCancel }: Props) =>
 			{selectedPost ? (
 				<div className='edit-buttons'>
 					<button type='submit'>Save</button>
-					<button type='button' onClick={onCancel}>Cancel</button>
+					<button type='button' onClick={() => setSelectedPost(null)}>Cancel</button>
 				</div>
 			) : (
 				<button type='submit'>Add Post</button>
